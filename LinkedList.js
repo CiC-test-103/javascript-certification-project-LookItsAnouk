@@ -6,15 +6,16 @@ const { Student } = require('./Student')
  */
 class Node {
   // Public Fields
-  data               // Student
-  next               // Object
+  data // Student
+  next // Object
   /**
    * REQUIRES:  The fields specified above
    * EFFECTS:   Creates a new Node instance
    * RETURNS:   None
    */
-  constructor(data, next = null) {
-    this.data = data;
+  constructor (data, next = null) {
+    this.data = data instanceof Student ? data : new Student(data)
+    //ensures that data is a student object, if not it creates a new one
     this.next = next
   }
 }
@@ -26,17 +27,19 @@ class Node {
  */
 class LinkedList {
   // Public Fields
-  head              // Object
-  tail              // Object
-  length            // Number representing size of LinkedList
+  head // Object
+  tail // Object
+  length // Number representing size of LinkedList
 
   /**
    * REQUIRES:  None
    * EFFECTS:   Creates a new LinkedList instance (empty)
    * RETURNS:   None
    */
-  constructor() {
-    // TODO
+  constructor () {
+    this.head = null
+    this.tail = null
+    this.length = 0
   }
 
   /**
@@ -45,10 +48,25 @@ class LinkedList {
    * RETURNS:   None
    * CONSIDERATIONS:
    * - Think about the null case
-   * - Think about adding to the 'end' of the LinkedList (Hint: tail)
+   * - Think about adding to thel; 'end' of the LinkedList (Hint: tail)
    */
-  addStudent(newStudent) {
-    // TODO
+  addStudent (newStudent) {
+    const newNode = new Node(newStudent)
+    if (!newStudent) {
+      throw new Error('Invalid student data.')
+    }
+    // if the linkedList is empty, set both to new node
+    if (!this.head) {
+      this.head = newNode
+      this.tail = newNode
+    }
+    // if the linkedlist is not empty, current tail.next is ne n ode
+    //and the tail is updated to the new node.
+    else {
+      this.tail.next = newNode
+      this.tail = newNode
+    }
+    this.length++
   }
 
   /**
@@ -59,8 +77,48 @@ class LinkedList {
    * - Think about the null case
    * - Think about how removal might update head or tail
    */
-  removeStudent(email) {
-    // TODO
+  removeStudent (email) {
+    //check that email type is correct
+    if (!email || typeof email !== 'string') {
+      throw new Error('Invalid email.')
+    }
+
+    if (!this.head) {
+      //no students in list
+      console.log('No students to remove.')
+      return
+    }
+    if (this.head.data.getEmail() === email) {
+      //remove the first student if email matches
+      this.head = this.head.next
+      if (!this.head) {
+        //if the list is now empty, set tail to null
+        this.tail = null
+      }
+      this.length--
+      return
+    }
+
+    let current = this.head
+    let previous = null
+
+    while (current) {
+      //looping over the list to fins matching ermail
+      if (current.data.getEmail() === email) {
+        console.log('Removing student with matching email')
+        //set previous to current (eliminating current)
+        previous.next = current.next
+        if (current === this.tail) {
+          //if current is also tail, update it to previous
+          this.tail = previous
+        }
+        this.length--
+        return
+      }
+      //continue looping
+      previous = current
+      current = current.next
+    }
   }
 
   /**
@@ -68,8 +126,25 @@ class LinkedList {
    * EFFECTS:   None
    * RETURNS:   The Student or -1 if not found
    */
-  findStudent(email) {
-    // TODO
+  findStudent (email) {
+    if (!email || typeof email !== 'string') {
+      throw new Error('Invalid email.')
+    }
+
+    let current = this.head
+    let previous = null
+
+    while (current) {
+      //looping over the list to find matching email
+      if (current.data.getEmail() === email) {
+        //if email matches return student object
+        return current.data
+      }
+      previous = current
+      current = current.next
+    }
+    //if no match is found, return -1
+    console.log('Student not found.')
     return -1
   }
 
@@ -78,8 +153,11 @@ class LinkedList {
    * EFFECTS:   Clears all students from the Linked List
    * RETURNS:   None
    */
-  #clearStudents() {
-    // TODO
+  clearStudents () {
+    //resets feilds to null and length to 0
+    this.head = null
+    this.tail = null
+    this.length = 0
   }
 
   /**
@@ -90,9 +168,14 @@ class LinkedList {
    *  - Let's assume you have a LinkedList with two people
    *  - Output should appear as: "JohnDoe, JaneDoe"
    */
-  displayStudents() {
-    // TODO
-    return "";
+  displayStudents () {
+    let current = this.head
+    let list = []
+    while (current !== null) {
+      list.push(current.data.getName())
+      current = current.next
+    }
+    return list.join(', ')
   }
 
   /**
@@ -100,9 +183,17 @@ class LinkedList {
    * EFFECTS:   None
    * RETURNS:   A sorted array of students by name
    */
-  #sortStudentsByName() {
-    // TODO
-    return [];
+  #sortStudentsByName () {
+    let list = []
+    let current = this.head
+    //looping over the list to get all students
+    while (current) {
+      list.push(current.data)
+      current = current.next
+    }
+
+    list.sort((a, b) => a.getName().localeCompare(b.getName()))
+    return list
   }
 
   /**
@@ -112,9 +203,18 @@ class LinkedList {
    * CONSIDERATIONS:
    * - Use sortStudentsByName()
    */
-  filterBySpecialization(specialization) {
-    // TODO
-    return [];
+  filterBySpecialization (specialization) {
+    if (specialization) {
+      let sortedStudents = this.#sortStudentsByName()
+
+      let list = []
+      for (let student of sortedStudents) {
+        if (student.getSpecialization() === specialization) {
+          list.push(student)
+        }
+      }
+      return list
+    }
   }
 
   /**
@@ -124,9 +224,19 @@ class LinkedList {
    * CONSIDERATIONS:
    * - Use sortStudentsByName()
    */
-  filterByMinAge(minAge) {
-    // TODO
-    return [];
+  filterByMinAge (minAge) {
+    //ask about minage? min years of study?
+    if (minAge && minAge > 0) {
+      let sortedStudents = this.#sortStudentsByName()
+
+      let list = []
+      for (let student of sortedStudents) {
+        if (student.getYear() === minAge) {
+          list.push(student)
+        }
+      }
+      return list
+    }
   }
 
   /**
@@ -134,8 +244,27 @@ class LinkedList {
    * EFFECTS:   Writes the LinkedList to a JSON file with the specified file name
    * RETURNS:   None
    */
-  async saveToJson(fileName) {
-    // TODO
+  async saveToJson (fileName) {
+    if (!fileName || typeof fileName !== 'string') {
+      throw new Error('Invalid file name.')
+    }
+    let list = []
+    let current = this.head
+    const fs = require('fs')
+    // file system module to write to file
+    while (current) {
+      let studentData = {
+        name: current.data.getName(),
+        email: current.data.getEmail(),
+        year: current.data.getYear(),
+        specialization: current.data.getSpecialization()
+      }
+      list.push(studentData)
+      current = current.next
+    }
+    let jsonData = JSON.stringify(list, null, 2)
+    // convert the list to a JSON string, with 2 spaces for indentation
+    fs.writeFileSync(fileName, jsonData)
   }
 
   /**
@@ -145,10 +274,27 @@ class LinkedList {
    * CONSIDERATIONS:
    *  - Use clearStudents() to perform overwriting
    */
-  async loadFromJSON(fileName) {
-    // TODO
-  }
+  async loadFromJSON (fileName) {
+    const fs = require('fs').promises
+    try {
+      const fileContent = await fs.readFile(fileName, 'utf-8')
+      const jsonData = JSON.parse(fileContent)
 
+      this.clearStudents()
+
+      jsonData.forEach(item => {
+        let student = new Student(
+          item.name,
+          item.year,
+          item.email,
+          item.specialization
+        )
+        this.addStudent(student)
+      })
+    } catch (error) {
+      console.error('Error loading data:', error.message) // Log the error message
+    }
+  }
 }
 
 module.exports = { LinkedList }
